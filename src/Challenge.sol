@@ -7,15 +7,15 @@ pragma solidity ^0.8.17;
  */
 contract Challenge {
     struct User {
-        bytes32 commitment;
-        address addressUser;
-        string answer;
+        bytes32 commitment; // Hashed answer submitted by the participant
+        address addressUser; // Address of the participant
+        string answer; // Revealed answer by the participant
     }
-    User[] public users;
-    bool public revealPhase;
-    address public winner;
-    string public winningAnswer;
-    address public owner;
+    User[] public users; // Array to store user data
+    bool public revealPhase; // Flag indicating if the reveal phase has started
+    address public winner; // Address of the winner
+    string public winningAnswer; // Revealed answer of the winner
+    address public owner; // Address of the contract owner
 
     event AnswerRevealed(address indexed participant, string answer);
     event WinnerRevealed(address indexed winner, string winningAnswer);
@@ -24,8 +24,8 @@ contract Challenge {
      * @dev Initializes the Challenge contract.
      */
     constructor() {
-        revealPhase = false;
-        owner = msg.sender;
+        revealPhase = false; // Set reveal phase to false initially
+        owner = msg.sender; // Set the contract owner as the deployer of the contract
     }
 
     /**
@@ -33,13 +33,13 @@ contract Challenge {
      * @param hash The hash of the participant's answer.
      */
     function commit(bytes32 hash) public {
-        require(!revealPhase, "Commit phase is over");
-        require(getUser(msg.sender) == -1, "Commitment already made");
+        require(!revealPhase, "Commit phase is over"); // Check if the commit phase is still ongoing
+        require(getUser(msg.sender) == -1, "Commitment already made"); // Check if the user has not already made a commitment
 
         User memory user;
-        user.commitment = hash;
-        user.addressUser = msg.sender;
-        users.push(user);
+        user.commitment = hash; // Set the commitment hash for the user
+        user.addressUser = msg.sender; // Set the user's address
+        users.push(user); // Add the user to the users array
     }
 
     /**
@@ -47,15 +47,18 @@ contract Challenge {
      * @param answer The actual answer to be revealed.
      */
     function reveal(string memory answer) public {
-        int id = getUser(msg.sender);
-        require(revealPhase, "Reveal phase has not started yet");
-        require(id != -1, "No commitment found");
+        require(revealPhase, "Reveal phase has not started yet"); // Check if the reveal phase has started
+        int id = getUser(msg.sender); // Get the user's index based on the caller address
+        require(id != -1, "No commitment found"); // Check if the user has made a commitment
 
-        bytes32 answerHash = keccak256(bytes(answer));
-        require(users[uint(id)].commitment == answerHash, "Revealed answer does not match commitment");
+        bytes32 answerHash = keccak256(bytes(answer)); // Hash the provided answer
+        require(
+            users[uint256(id)].commitment == answerHash,
+            "Revealed answer does not match commitment"
+        ); // Check if the revealed answer matches the commitment
 
-        users[uint(id)].answer = answer;
-        emit AnswerRevealed(msg.sender, answer);
+        users[uint256(id)].answer = answer; // Store the revealed answer for the user
+        emit AnswerRevealed(msg.sender, answer); // Emit an event to indicate the answer has been revealed
     }
 
     /**
@@ -70,10 +73,15 @@ contract Challenge {
      * @param participant The address of the participant.
      * @return The revealed answer of the participant.
      */
-    function getAnswer(address participant) public view returns (string memory) {
-        int id = getUser(participant);
-        require(id != -1, "User has not revealed answer yet");
-        return users[uint(id)].answer;
+    function getAnswer(
+        address participant
+    ) public view returns (string memory) {
+        int id = int(getUser(participant)); // Get the index of the participant in the users array
+        require(
+            bytes(users[uint(id)].answer).length > 0,
+            "User has not revealed answer yet"
+        ); // Check if the participant has revealed their answer
+        return users[uint(id)].answer; // Return the revealed answer of the participant
     }
 
     /**
@@ -81,20 +89,21 @@ contract Challenge {
      * @param secretHash The hash of the secret answer.
      */
     function revealWinner(bytes32 secretHash) public onlyOwner {
-        require(revealPhase, "Reveal phase has not started yet");
-        require(winner == address(0), "Winner already revealed");
-        require(users.length > 0, "No commitments found to declare winner");
+        require(revealPhase, "Reveal phase has not started yet"); // Check if the reveal phase has started
+        require(winner == address(0), "Winner already revealed"); // Check if the winner has already been revealed
+        require(users.length > 0, "No commitments found to declare winner"); // Check if there are commitments to declare a winner
 
         for (uint i = 0; i < users.length; i++) {
+            // Iterate through the users array
             if (keccak256(bytes(users[i].answer)) == secretHash) {
-                winner = users[i].addressUser;
-                winningAnswer = users[i].answer;
-                emit WinnerRevealed(winner, winningAnswer);
-                return;
+                // Check if the hashed answer matches the secretHash
+                winner = users[i].addressUser; // Set the winner address
+                winningAnswer = users[i].answer; // Set the winning answer
+                emit WinnerRevealed(winner, winningAnswer); // Emit an event to indicate the winner has been revealed
+                return; // Exit the function
             }
         }
-
-        revert("No winner found");
+        revert("No winner found"); // Revert if no winner is found
     }
 
     /**
@@ -103,11 +112,13 @@ contract Challenge {
      */
     function getUser(address _address) public view returns (int) {
         for (uint i = 0; i < users.length; i++) {
+            // Iterate through the users array
             if (users[i].addressUser == _address) {
-                return int(i);
+                // Check if the address matches
+                return int(i); // Return the index of the user
             }
         }
-        return -1;
+        return -1; // Return -1 if the user is not found
     }
 
     /**
