@@ -11,6 +11,7 @@ contract Challenge {
         address addressUser; // Address of the participant
         string answer; // Revealed answer by the participant
     }
+
     User[] public users; // Array to store user data
     bool public revealPhase; // Flag indicating if the reveal phase has started
     address public winner; // Address of the winner
@@ -48,14 +49,11 @@ contract Challenge {
      */
     function reveal(string memory answer) public {
         require(revealPhase, "Reveal phase has not started yet"); // Check if the reveal phase has started
-        int id = getUser(msg.sender); // Get the user's index based on the caller address
+        int256 id = getUser(msg.sender); // Get the user's index based on the caller address
         require(id != -1, "No commitment found"); // Check if the user has made a commitment
 
         bytes32 answerHash = keccak256(bytes(answer)); // Hash the provided answer
-        require(
-            users[uint256(id)].commitment == answerHash,
-            "Revealed answer does not match commitment"
-        ); // Check if the revealed answer matches the commitment
+        require(users[uint256(id)].commitment == answerHash, "Revealed answer does not match commitment"); // Check if the revealed answer matches the commitment
 
         users[uint256(id)].answer = answer; // Store the revealed answer for the user
         emit AnswerRevealed(msg.sender, answer); // Emit an event to indicate the answer has been revealed
@@ -73,15 +71,10 @@ contract Challenge {
      * @param participant The address of the participant.
      * @return The revealed answer of the participant.
      */
-    function getAnswer(
-        address participant
-    ) public view returns (string memory) {
-        int id = int(getUser(participant)); // Get the index of the participant in the users array
-        require(
-            bytes(users[uint(id)].answer).length > 0,
-            "User has not revealed answer yet"
-        ); // Check if the participant has revealed their answer
-        return users[uint(id)].answer; // Return the revealed answer of the participant
+    function getAnswer(address participant) public view returns (string memory) {
+        int256 id = int256(getUser(participant)); // Get the index of the participant in the users array
+        require(bytes(users[uint256(id)].answer).length > 0, "User has not revealed answer yet"); // Check if the participant has revealed their answer
+        return users[uint256(id)].answer; // Return the revealed answer of the participant
     }
 
     /**
@@ -93,7 +86,7 @@ contract Challenge {
         require(winner == address(0), "Winner already revealed"); // Check if the winner has already been revealed
         require(users.length > 0, "No commitments found to declare winner"); // Check if there are commitments to declare a winner
 
-        for (uint i = 0; i < users.length; i++) {
+        for (uint256 i = 0; i < users.length; i++) {
             // Iterate through the users array
             if (keccak256(bytes(users[i].answer)) == secretHash) {
                 // Check if the hashed answer matches the secretHash
@@ -110,12 +103,12 @@ contract Challenge {
      * @dev Searches for the user based on the caller address.
      * @return index of the user in the array users, or -1 if not found.
      */
-    function getUser(address _address) public view returns (int) {
-        for (uint i = 0; i < users.length; i++) {
+    function getUser(address _address) public view returns (int256) {
+        for (uint256 i = 0; i < users.length; i++) {
             // Iterate through the users array
             if (users[i].addressUser == _address) {
                 // Check if the address matches
-                return int(i); // Return the index of the user
+                return int256(i); // Return the index of the user
             }
         }
         return -1; // Return -1 if the user is not found
