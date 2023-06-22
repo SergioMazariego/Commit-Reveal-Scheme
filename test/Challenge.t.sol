@@ -114,8 +114,10 @@ contract ChallengeTest is Test {
     }
 
     function testStartRevealPhase() public {
-        //  Attempt to start the reveal phase using a non-owner account.
-
         //  Verify that the function reverts with the appropriate error message.
+        vm.expectRevert("Only the owner can call this function.");
+        //  Attempt to start the reveal phase using a non-owner account.
+        vm.prank(address(1));
+        challenge.startRevealPhase();
     }
 }

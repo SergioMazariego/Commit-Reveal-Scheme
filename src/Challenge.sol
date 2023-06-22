@@ -50,7 +50,7 @@ contract Challenge {
     function reveal(string memory answer) public {
         require(revealPhase, "Reveal phase has not started yet"); // Check if the reveal phase has started
         int256 id = getUser(msg.sender); // Get the user's index based on the caller address
-        require(id != -1, "No commitment found"); // Check if the user has made a commitment
+        require(id != -1, "No commitment found"); // Check if users has made a commitment
 
         bytes32 answerHash = keccak256(bytes(answer)); // Hash the provided answer
         require(users[uint256(id)].commitment == answerHash, "Revealed answer does not match commitment"); // Check if the revealed answer matches the commitment
