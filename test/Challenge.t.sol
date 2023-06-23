@@ -9,6 +9,12 @@ contract ChallengeTest is Test {
 
     event AnswerRevealed(address indexed participant, string answer);
     event WinnerRevealed(address indexed winner, string winningAnswer);
+
+    struct User {
+        bytes32 commitment; 
+        address addressUser; 
+        string answer;
+    }
     function setUp() public {
         challenge = new Challenge();
     }
@@ -20,11 +26,21 @@ contract ChallengeTest is Test {
     }
 
     function testRevealAnswer() public {
+        vm.prank(address(1));
+        challenge.commit(keccak256(abi.encodePacked("test1")));
+
+        (bytes32 commit,address user,string memory ans) = challenge.users(0);
+        bytes32 answerHash = keccak256((abi.encodePacked("test1")));
+
         // Start the reveal phase using the startRevealPhase function
+        challenge.startRevealPhase();
 
         // User reveal an answer using the reveal function.
-
-        // Verify that the revealed answer matches the commitment hash and is recorded correctly in the users array.
+        vm.expectEmit();
+        emit AnswerRevealed(address(1), "test1");
+        vm.prank(address(1));
+        challenge.reveal("test1");
+        //Verify that the commitment is recorded correctly by checking the user's commitment in the users array.
     }
 
     function testGetAnswer() public {
