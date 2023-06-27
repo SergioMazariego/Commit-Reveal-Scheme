@@ -9,12 +9,6 @@ contract ChallengeTest is Test {
 
     event AnswerRevealed(address indexed participant, string answer);
     event WinnerRevealed(address indexed winner, string winningAnswer);
-
-    struct User {
-        bytes32 commitment; 
-        address addressUser; 
-        string answer;
-    }
     function setUp() public {
         challenge = new Challenge();
     }
@@ -29,7 +23,7 @@ contract ChallengeTest is Test {
         vm.prank(address(1));
         challenge.commit(keccak256(abi.encodePacked("test1")));
 
-        (bytes32 commit,address user,string memory ans) = challenge.users(0);
+        (bytes32 commit,,) = challenge.users(0);
         bytes32 answerHash = keccak256((abi.encodePacked("test1")));
 
         // Start the reveal phase using the startRevealPhase function
@@ -41,12 +35,23 @@ contract ChallengeTest is Test {
         vm.prank(address(1));
         challenge.reveal("test1");
         //Verify that the commitment is recorded correctly by checking the user's commitment in the users array.
+        assertEq(commit, answerHash);
     }
 
     function testGetAnswer() public {
-        // Get the answer of a participant using the getAnswer function.
-
+        // Commit answer for user1
+        vm.prank(address(1));
+        challenge.commit(keccak256(abi.encodePacked("test")));
+        // Start the reveal phase
+        challenge.startRevealPhase();
+        // User reveal answer
+        vm.prank(address(1));
+        challenge.reveal("test");
+        // Get the answer of the participant using the getAnswer function.
+        string memory answer = challenge.getAnswer(address(1));
         // Verify that the returned answer matches the revealed answer of the participant.
+        (,,string memory ans) = challenge.users(0);
+        assertEq(answer, ans);
     }
 
     function testRevealWinner() public {
@@ -123,10 +128,12 @@ contract ChallengeTest is Test {
 
     function testCommitAfterRevealPhaseStarted() public {
         //  Start the reveal phase using the startRevealPhase function.
-
-        //  Attempt to commit an answer using the commit function.
-
+        challenge.startRevealPhase();
         //  Verify that the function reverts with the appropriate error message.
+        vm.expectRevert("Commit phase is over");
+        //  Attempt to commit an answer using the commit function.
+        vm.prank(address(1));
+        challenge.commit(keccak256(abi.encodePacked("test1")));
     }
 
     function testStartRevealPhase() public {
